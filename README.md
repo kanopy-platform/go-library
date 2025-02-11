@@ -25,8 +25,7 @@ mod2/
 
 Packages may be organized following golang standards.  Use a model that best fits the requirements and complexity of the individual module.  Below are some guidelines to consider: 
 
-* Packages MAY contain a flat structure of `.go` files
-* Packages MAY have a `pkg` directory with the exported interfaces and functions
+* All packages MUST define flat `.go` files in the package directory with the exported interfaces and functions. Complex packages MAY also have a `pkg` directory to organize exported sub-packages.
 * Packages MAY have an `internal` directory to organize interfaces and functions not meant for external use
 * Packages MUST NOT expose a `main` function
 * Packages MAY have their own `go.mod`.  It may need its own `go.mod` if
