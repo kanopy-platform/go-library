@@ -25,13 +25,13 @@ mod2/
 
 Packages may be organized following golang standards.  Use a model that best fits the requirements and complexity of the individual module.  Below are some guidelines to consider: 
 
-* Modules MAY contain a flat structure of `.go` files
-* Modules MAY have a `pkg` directory with the exported interfaces and functions
-* Modules MAY have an `internal` directory to organize interfaces and functions not meant for external use
-* Modules MUST NOT expose a `main` function
-* Modules MAY have their own `go.mod`.  It may need its own `go.mod` if
-    - The module needs an isolated release cycle
-    - The number of dependencies is causing a negative impact for other modules in the monorepo.
+* Packages MAY contain a flat structure of `.go` files
+* Packages MAY have a `pkg` directory with the exported interfaces and functions
+* Packages MAY have an `internal` directory to organize interfaces and functions not meant for external use
+* Packages MUST NOT expose a `main` function
+* Packages MAY have their own `go.mod`.  It may need its own `go.mod` if
+    - The package needs an isolated release cycle
+    - The number of dependencies is causing a negative impact for other packages in the monorepo.
 
 
 ## Release
