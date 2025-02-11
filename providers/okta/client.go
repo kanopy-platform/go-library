@@ -1,4 +1,4 @@
-package okta
+package client
 
 import (
 	"context"
