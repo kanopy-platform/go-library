@@ -56,7 +56,7 @@ func WithLimit(limit int32) ListGroupUsersOpt {
 	}
 }
 
-func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...ListGroupUsersOpt) (*[]okta.GroupMember, error) {
+func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...ListGroupUsersOpt) ([]okta.GroupMember, error) {
 	query := c.GroupAPI.ListGroupUsers(ctx, groupId)
 	for _, opt := range opts {
 		query = opt(query)
@@ -76,7 +76,7 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 		users = append(users, nextSet...)
 	}
 
-	return &users, nil
+	return users, nil
 }
 
 func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group, error) {
