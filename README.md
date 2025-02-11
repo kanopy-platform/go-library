@@ -6,6 +6,9 @@ The go-library is a monorepo of golang modules designed for reusability within C
 
 A package should be self contained within its own folder off the root of the repository.
 
+If a package grows rapidly or versioning complexity arises due to frequent package changes, you may want to add a `go.mod` file to make it a separate Go module that is versioned and tagged separately.
+
+Further, as module complexity or test execution time increases, you may also want to consider moving modules to a separate repo as needed.
 For example:
 ```
 mod1/
