@@ -35,7 +35,7 @@ Packages may be organized following golang standards.  Use a model that best fit
 
 ## Release
 
-The monorepo should be release following semantic versioning and golang standards.  e.g. v0.1.0
+The monorepo should be released following semantic versioning and golang standards.  e.g. v0.1.0
 
 If a module contains its own `go.mod` it may follow an individual release cycle using the module path and version.
 
