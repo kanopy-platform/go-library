@@ -1,6 +1,3 @@
-BUILD_PIPELINE_ARCH = "arm64"
-
-
 # workaround to render locally since you cant pass repo.branch to the cli
 def repo_branch(ctx):
     return getattr(ctx.repo, "branch", "main")
