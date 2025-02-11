@@ -1,4 +1,4 @@
-# go-library is a monorepo of modules
+# go-library is a monorepo of Go packages
 
 The go-library is a monorepo of golang packages designed for reusability within CLI and daemon applications.
 
