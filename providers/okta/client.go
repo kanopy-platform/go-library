@@ -17,7 +17,7 @@ type Client struct {
 	oktaClient *okta.APIClient
 }
 
-func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
+func New(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
 	jwk := &jose.JSONWebKey{}
 	if err := json.Unmarshal(jwkBytes, jwk); err != nil {
 		return nil, err
