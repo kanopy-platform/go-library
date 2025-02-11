@@ -14,7 +14,7 @@ import (
 )
 
 type Client struct {
-	oktaClient *okta.APIClient
+	*okta.APIClient
 }
 
 func New(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
@@ -45,7 +45,7 @@ func New(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Cl
 	}
 
 	client := okta.NewAPIClient(config)
-	return &Client{oktaClient: client}, nil
+	return &Client{client}, nil
 }
 
 type ListGroupUsersOpt func(okta.ApiListGroupUsersRequest) okta.ApiListGroupUsersRequest
@@ -57,12 +57,12 @@ func WithLimit(limit int32) ListGroupUsersOpt {
 }
 
 func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...ListGroupUsersOpt) (*[]okta.GroupMember, error) {
-	query := c.oktaClient.GroupAPI.ListGroupUsers(ctx, groupId)
+	query := c.GroupAPI.ListGroupUsers(ctx, groupId)
 	for _, opt := range opts {
 		query = opt(query)
 	}
 
-	users, resp, err := c.oktaClient.GroupAPI.ListGroupUsersExecute(query)
+	users, resp, err := c.GroupAPI.ListGroupUsersExecute(query)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 }
 
 func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group, error) {
-	query := c.oktaClient.GroupAPI.ListGroups(ctx).Q(groupName)
+	query := c.GroupAPI.ListGroups(ctx).Q(groupName)
 	oktaGroups, _, err := query.Execute()
 	if err != nil {
 		return nil, err
