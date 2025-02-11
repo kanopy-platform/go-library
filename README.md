@@ -9,6 +9,7 @@ A package should be self contained within its own folder off the root of the rep
 If a package grows rapidly or versioning complexity arises due to frequent package changes, you may want to add a `go.mod` file to make it a separate Go module that is versioned and tagged separately.
 
 Further, as module complexity or test execution time increases, you may also want to consider moving modules to a separate repo as needed.
+
 For example:
 ```
 pkg1/
@@ -37,7 +38,7 @@ Packages may be organized following golang standards.  Use a model that best fit
 
 The monorepo should be released following semantic versioning and golang standards.  e.g. v0.1.0
 
-If a module contains its own `go.mod` it may follow an individual release cycle using the module path and version.
+If a package is a module (contains its own `go.mod`) it MUST follow an individual release cycle using the module path and version.
 
 For example:
 
