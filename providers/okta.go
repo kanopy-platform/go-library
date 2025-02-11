@@ -70,6 +70,9 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 	for resp.HasNextPage() {
 		var nextSet []okta.GroupMember
 		resp, err = resp.Next(&nextSet)
+		if err != nil {
+			return nil, err
+		}
 		users = append(users, nextSet...)
 	}
 
