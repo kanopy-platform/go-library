@@ -62,7 +62,7 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 		query = opt(query)
 	}
 
-	users, resp, err := c.GroupAPI.ListGroupUsersExecute(query)
+	users, resp, err := query.Execute()
 	if err != nil {
 		return nil, err
 	}
