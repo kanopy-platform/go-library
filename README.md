@@ -4,7 +4,7 @@ The go-library is a monorepo of golang modules designed for reusability within C
 
 ## Conventions
 
-A module should be self contained within its own folder off the root of the repository.
+A package should be self contained within its own folder off the root of the repository.
 
 For example:
 ```
