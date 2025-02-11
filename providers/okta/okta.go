@@ -1,4 +1,4 @@
-package client
+package okta
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Client struct {
 	*okta.APIClient
 }
 
-func New(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
+func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
 	jwk := &jose.JSONWebKey{}
 	if err := json.Unmarshal(jwkBytes, jwk); err != nil {
 		return nil, err
