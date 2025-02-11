@@ -1,6 +1,6 @@
 # go-library is a monorepo of modules
 
-The go-library is a monorepo of golang modules designed for reusability within CLI and daemon applications.
+The go-library is a monorepo of golang packages designed for reusability within CLI and daemon applications.
 
 ## Conventions
 
@@ -23,7 +23,7 @@ mod2/
     go.mod
 ```
 
-Packages may be organized following golang standards.  Use a model that best fits the requirements and complexity of the individual module.  Below are some guidelines to consider: 
+Packages may be organized following golang standards.  Use a model that best fits the requirements and complexity of the individual package.  Below are some guidelines to consider: 
 
 * All packages MUST define flat `.go` files in the package directory with the exported interfaces and functions. Complex packages MAY also have a `pkg` directory to organize exported sub-packages.
 * Packages MAY have an `internal` directory to organize interfaces and functions not meant for external use
