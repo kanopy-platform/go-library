@@ -20,7 +20,7 @@ type Client struct {
 func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
 	jwk := &jose.JSONWebKey{}
 	if err := json.Unmarshal(jwkBytes, jwk); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marhsal jwk bytes to json: %w", err)
 	}
 
 	rsaPrivateKey, ok := jwk.Key.(*rsa.PrivateKey)
@@ -30,7 +30,7 @@ func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string
 
 	pemKey := &strings.Builder{}
 	if err := pem.Encode(pemKey, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivateKey)}); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal pkcs1 private key: %w", err)
 	}
 
 	config, err := okta.NewConfiguration(
@@ -41,7 +41,7 @@ func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string
 		okta.WithPrivateKey(pemKey.String()),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build okta configuration: %w", err)
 	}
 
 	client := okta.NewAPIClient(config)
@@ -64,14 +64,14 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 
 	users, resp, err := query.Execute()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query okta group users: %w", err)
 	}
 
 	for resp.HasNextPage() {
 		var nextSet []okta.GroupMember
 		resp, err = resp.Next(&nextSet)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to receive pagination results: %w", err)
 		}
 		users = append(users, nextSet...)
 	}
@@ -83,7 +83,7 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 	query := c.GroupAPI.ListGroups(ctx).Q(groupName)
 	oktaGroups, _, err := query.Execute()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query okta group: %w", err)
 	}
 
 	// okta group names are unique
