@@ -17,28 +17,35 @@ type Client struct {
 	*okta.APIClient
 }
 
-func NewClient(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
+func JWKFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
 	jwk := &jose.JSONWebKey{}
-	if err := json.Unmarshal(jwkBytes, jwk); err != nil {
+	if err := json.Unmarshal(bytes, jwk); err != nil {
 		return nil, fmt.Errorf("failed to marhsal jwk bytes to json: %w", err)
 	}
+	return jwk, nil
+}
 
+func JWKToRSA(jwk *jose.JSONWebKey) (string, error) {
 	rsaPrivateKey, ok := jwk.Key.(*rsa.PrivateKey)
 	if !ok {
-		return nil, fmt.Errorf("key data must be of type *rsa.PrivateKey")
+		return "", fmt.Errorf("key data must be of type *rsa.PrivateKey")
 	}
 
 	pemKey := &strings.Builder{}
 	if err := pem.Encode(pemKey, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivateKey)}); err != nil {
-		return nil, fmt.Errorf("failed to marshal pkcs1 private key: %w", err)
+		return "", fmt.Errorf("failed to marshal pkcs1 private key: %w", err)
 	}
 
+	return pemKey.String(), nil
+}
+
+func NewClient(orgURL string, clientID string, key string, scopes ...string) (*Client, error) {
 	config, err := okta.NewConfiguration(
 		okta.WithOrgUrl(orgURL),
-		okta.WithAuthorizationMode("PrivateKey"),
 		okta.WithClientId(clientID),
 		okta.WithScopes(scopes),
-		okta.WithPrivateKey(pemKey.String()),
+		okta.WithAuthorizationMode("PrivateKey"),
+		okta.WithPrivateKey(key),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build okta configuration: %w", err)
