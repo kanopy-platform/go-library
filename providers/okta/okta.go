@@ -17,26 +17,16 @@ type Client struct {
 	*okta.APIClient
 }
 
-func JWKFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
-	jwk := &jose.JSONWebKey{}
-	if err := json.Unmarshal(bytes, jwk); err != nil {
-		return nil, fmt.Errorf("failed to marhsal jwk bytes to json: %w", err)
+func NewClientFromJWKBytes(orgURL string, clientID string, jwkBytes []byte, scopes ...string) (*Client, error) {
+	jwk, err := jwkFromBytes(jwkBytes)
+	if err != nil {
+		return nil, err
 	}
-	return jwk, nil
-}
-
-func JWKToRSA(jwk *jose.JSONWebKey) (string, error) {
-	rsaPrivateKey, ok := jwk.Key.(*rsa.PrivateKey)
-	if !ok {
-		return "", fmt.Errorf("key data must be of type *rsa.PrivateKey")
+	pem, err := jwkToRSA(jwk)
+	if err != nil {
+		return nil, err
 	}
-
-	pemKey := &strings.Builder{}
-	if err := pem.Encode(pemKey, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivateKey)}); err != nil {
-		return "", fmt.Errorf("failed to marshal pkcs1 private key: %w", err)
-	}
-
-	return pemKey.String(), nil
+	return NewClient(orgURL, clientID, pem, scopes...)
 }
 
 func NewClient(orgURL string, clientID string, key string, scopes ...string) (*Client, error) {
@@ -98,4 +88,26 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 		return nil, fmt.Errorf("unable to find okta group %q", groupName)
 	}
 	return &oktaGroups[0], nil
+}
+
+func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
+	jwk := &jose.JSONWebKey{}
+	if err := json.Unmarshal(bytes, jwk); err != nil {
+		return nil, fmt.Errorf("failed to marhsal jwk bytes to json: %w", err)
+	}
+	return jwk, nil
+}
+
+func jwkToRSA(jwk *jose.JSONWebKey) (string, error) {
+	rsaPrivateKey, ok := jwk.Key.(*rsa.PrivateKey)
+	if !ok {
+		return "", fmt.Errorf("key data must be of type *rsa.PrivateKey")
+	}
+
+	pemKey := &strings.Builder{}
+	if err := pem.Encode(pemKey, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivateKey)}); err != nil {
+		return "", fmt.Errorf("failed to marshal pkcs1 private key: %w", err)
+	}
+
+	return pemKey.String(), nil
 }
