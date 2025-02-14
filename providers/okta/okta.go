@@ -84,7 +84,7 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 	}
 
 	for _, group := range oktaGroups {
-		if *group.Profile.Name == groupName {
+		if group.Profile != nil && group.Profile.Name != nil && *group.Profile.Name == groupName {
 			return &group, nil
 		}
 	}
