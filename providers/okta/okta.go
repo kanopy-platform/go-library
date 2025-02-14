@@ -83,11 +83,13 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 		return nil, fmt.Errorf("failed to query okta group: %w", err)
 	}
 
-	// okta group names are unique
-	if len(oktaGroups) != 1 {
-		return nil, fmt.Errorf("unable to find okta group %q", groupName)
+	for _, group := range oktaGroups {
+		if *group.Profile.Name == groupName {
+			return &group, nil
+		}
 	}
-	return &oktaGroups[0], nil
+
+	return nil, fmt.Errorf("unable to find okta group %q", groupName)
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
