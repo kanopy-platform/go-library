@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -39,4 +40,8 @@ func ListenAndServeWithSignals(srv *http.Server, sc chan os.Signal, timeout int,
 	defer cancel()
 
 	return srv.Shutdown(ctx)
+}
+
+func ListenAndServeWithDefaultSignals(srv *http.Server, sc chan os.Signal, timeout int) error {
+	return ListenAndServeWithSignals(srv, sc, timeout, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 }
