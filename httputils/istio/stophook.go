@@ -9,7 +9,7 @@ import (
 // It is intended to be used as a defer function
 func StopHook(timeout int) {
 	c := &http.Client{
-		Timeout: time.Duration(timeout) * time.Milisecond,
+		Timeout: time.Duration(timeout) * time.Millisecond,
 	}
 	r, _ := http.NewRequest("POST", "http://localhost:15000/quitquitquit", nil)
 	c.Do(r) //nolint
