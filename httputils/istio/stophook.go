@@ -12,5 +12,5 @@ func StopHook(timeout int) {
 		Timeout: time.Duration(timeout) * time.Milisecond,
 	}
 	r, _ := http.NewRequest("POST", "http://localhost:15000/quitquitquit", nil)
-	c.Do(r)
+	c.Do(r) //nolint
 }
