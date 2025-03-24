@@ -25,6 +25,10 @@ func argBytes(original, patch any) ([]byte, []byte, error) {
 	return originalBytes, patchBytes, nil
 }
 
+// PatchJSON takes 2 []byte arguments and merges them as JSON Merge Patch documents.
+// This can be used for general merging of JSON documents, but it also preserves `null`
+// fields, which is useful if the merged document is used as a patch document or
+// gets passed to a downstream encoder.
 func PatchJSON(original, patch []byte) ([]byte, error) {
 	switch {
 	case emptyBytes(original):
@@ -37,6 +41,7 @@ func PatchJSON(original, patch []byte) ([]byte, error) {
 	return jsonpatch.MergeMergePatches(original, patch)
 }
 
+// PatchYAML does the same thing as PatchJSON, but with YAML []byte args.
 func PatchYAML(original, patch []byte) ([]byte, error) {
 	originalJSON, err := yaml.YAMLToJSON(original)
 	if err != nil {
@@ -51,6 +56,7 @@ func PatchYAML(original, patch []byte) ([]byte, error) {
 	return PatchJSON(originalJSON, patchJSON)
 }
 
+// PatchInterface marshals interface objects to []byte and processes with PatchJSON.
 func PatchInterface(original, patch any) error {
 	if original == nil || patch == nil {
 		return nil
@@ -69,6 +75,7 @@ func PatchInterface(original, patch any) error {
 	return json.Unmarshal(mergedBytes, original)
 }
 
+// Patch marshals generic objects to []byte and processes with PatchJSON.
 func Patch[T any](original, patch *T) (*T, error) {
 	switch {
 	case original == nil:
