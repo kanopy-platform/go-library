@@ -1,8 +1,9 @@
 package merge
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMergeMapStringString(t *testing.T) {
@@ -46,10 +47,12 @@ func TestMergeMapStringString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := MapStringString(test.m, test.args...)
-
-		if !reflect.DeepEqual(test.want, got) {
-			t.Errorf("%#v is not equal to %#v", test.want, got)
-		}
+		got := Maps(test.m, test.args...)
+		assert.Equal(t, test.want, got)
 	}
+}
+
+func TestTypes(t *testing.T) {
+	got := Maps(map[int]bool{0: true}, map[int]bool{1: false, 2: true})
+	assert.Equal(t, map[int]bool{0: true, 1: false, 2: true}, got)
 }
