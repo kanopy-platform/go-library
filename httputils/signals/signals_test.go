@@ -45,7 +45,7 @@ func TestListenAndServeWithSignal(t *testing.T) {
 	// queue up requests
 	var wg sync.WaitGroup
 	var success, failure atomic.Uint32
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -101,5 +101,5 @@ func (d *delayHandler) HandleWithDelay(w http.ResponseWriter, r *http.Request) {
 	}
 	time.Sleep(time.Duration(d.delay) * time.Second)
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "OKAY")
+	_, _ = fmt.Fprintln(w, "OKAY")
 }
