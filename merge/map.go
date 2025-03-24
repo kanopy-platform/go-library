@@ -2,7 +2,7 @@ package merge
 
 import "maps"
 
-// Maps merges multiple generic map objects and return a shallow copy.
+// Maps merges multiple generic map objects and returns a shallow copy.
 func Maps[M ~map[K]V, K comparable, V any](m1 M, mapArgs ...M) M {
 	out := M{}
 	maps.Copy(out, m1)
