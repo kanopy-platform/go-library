@@ -77,6 +77,7 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 }
 
 func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group, error) {
+
 	query := c.GroupAPI.ListGroups(ctx).Q(groupName)
 	oktaGroups, _, err := query.Execute()
 	if err != nil {
@@ -90,6 +91,52 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 	}
 
 	return nil, fmt.Errorf("unable to find okta group %q", groupName)
+}
+
+func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsize int) ([]*okta.Group, error) {
+
+	groups := []*okta.Group{}
+
+	groupMap := map[string]bool{}
+	for _, groupName := range groupNames {
+		groupMap[groupName] = true
+	}
+
+	for i := 0; i < len(groupNames); i += batchsize {
+		end := i + batchsize
+		if end > len(groupNames) {
+			end = len(groupNames)
+		}
+
+		filter := fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames[i:end], "\" or name eq \""))
+
+		// expanding stats to get the number of users in the group
+		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
+		oktaGroups, resp, err := query.Execute()
+		if err != nil {
+			return nil, fmt.Errorf("failed to query okta group: %w", err)
+		}
+
+		for _, group := range oktaGroups {
+
+			if group.Profile != nil && group.Profile.Name != nil && groupMap[*group.Profile.Name] {
+				groups = append(groups, &group)
+				delete(groupMap, *group.Profile.Name)
+			}
+		}
+		// todo check rate limit headers and decide on backoff strategy
+
+		if resp.Header.Get("X-Rate-Limit-Remaining") != "" {
+			// check rate limit remaining
+			// if rate limit is low, sleep for a bit
+
+			// time.Sleep(time.Second * 1)
+
+		}
+
+	}
+
+	return groups, nil
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
