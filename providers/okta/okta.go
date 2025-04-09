@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 
@@ -108,8 +109,14 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
 		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
-		oktaGroups, _, err := query.Execute()
+		oktaGroups, resp, err := query.Execute()
+
 		if err != nil {
+			bdy, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read response body: %s %w", string(bdy), err)
+			}
+
 			return nil, fmt.Errorf("failed to query okta group: %w", err)
 		}
 
