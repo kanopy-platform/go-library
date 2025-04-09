@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"net/url"
 	"strings"
 
 	jose "github.com/go-jose/go-jose/v4"
@@ -139,7 +140,7 @@ func toFilterString(groupNames []string) string {
 	if len(groupNames) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \""))
+	return url.QueryEscape(fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \"")))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
