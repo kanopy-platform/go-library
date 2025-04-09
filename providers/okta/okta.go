@@ -97,46 +97,49 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 
 	groups := []*okta.Group{}
 
-	groupMap := map[string]bool{}
-	for _, groupName := range groupNames {
-		groupMap[groupName] = true
-	}
+	// groupMap := map[string]bool{}
+	// for _, groupName := range groupNames {
+	// 	groupMap[groupName] = true
+	// }
 
-	for i := 0; i < len(groupNames); i += batchsize {
-		end := i + batchsize
-		if end > len(groupNames) {
-			end = len(groupNames)
-		}
+	batches := buildFilterNameBatches(groupNames, batchsize)
 
-		filter := fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames[i:end], "\" or name eq \""))
-
+	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
 		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
-		oktaGroups, resp, err := query.Execute()
+		oktaGroups, _, err := query.Execute()
 		if err != nil {
 			return nil, fmt.Errorf("failed to query okta group: %w", err)
 		}
 
 		for _, group := range oktaGroups {
-
-			if group.Profile != nil && group.Profile.Name != nil && groupMap[*group.Profile.Name] {
-				groups = append(groups, &group)
-				delete(groupMap, *group.Profile.Name)
-			}
+			//if group.Profile != nil && group.Profile.Name != nil && groupMap[*group.Profile.Name] {
+			groups = append(groups, &group)
+			//	delete(groupMap, *group.Profile.Name)
+			//}
 		}
-		// todo check rate limit headers and decide on backoff strategy
-
-		if resp.Header.Get("X-Rate-Limit-Remaining") != "" {
-			// check rate limit remaining
-			// if rate limit is low, sleep for a bit
-
-			// time.Sleep(time.Second * 1)
-
-		}
-
 	}
 
 	return groups, nil
+}
+
+func buildFilterNameBatches(groupNames []string, batchsize int) []string {
+	batches := []string{}
+	for i := 0; i < len(groupNames); i += batchsize {
+		end := i + batchsize
+		if end > len(groupNames) {
+			end = len(groupNames)
+		}
+		batches = append(batches, toFilterString(groupNames[i:end]))
+	}
+	return batches
+}
+
+func toFilterString(groupNames []string) string {
+	if len(groupNames) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \""))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
