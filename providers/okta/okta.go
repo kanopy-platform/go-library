@@ -148,7 +148,7 @@ func toFilterString(groupNames []string) string {
 	if len(groupNames) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("profile.Name eq \"%s\"", strings.Join(groupNames, "\" or profile.Name eq \""))
+	return fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \""))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
