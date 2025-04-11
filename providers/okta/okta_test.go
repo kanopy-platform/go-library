@@ -16,12 +16,12 @@ func TestToFilterStringWithGroupNames(t *testing.T) {
 		{
 			name:   "single group name",
 			input:  []string{"group1"},
-			output: "name eq \"group1\"",
+			output: "profile.name eq \"group1\"",
 		},
 		{
 			name:   "multiple group names",
 			input:  []string{"group1", "group2"},
-			output: "name eq \"group1\" or name eq \"group2\"",
+			output: "profile.name eq \"group1\" or profile.name eq \"group2\"",
 		},
 	}
 
@@ -44,13 +44,13 @@ func TestBuildFilterNameBatches(t *testing.T) {
 			name:      "single batch",
 			input:     []string{"group1", "group2", "group3"},
 			batchSize: 3,
-			expected:  []string{"name eq \"group1\" or name eq \"group2\" or name eq \"group3\""},
+			expected:  []string{"profile.name eq \"group1\" or profile.name eq \"group2\" or profile.name eq \"group3\""},
 		},
 		{
 			name:      "multiple batches",
 			input:     []string{"group1", "group2", "group3", "group4", "group5"},
 			batchSize: 2,
-			expected:  []string{"name eq \"group1\" or name eq \"group2\"", "name eq \"group3\" or name eq \"group4\"", "name eq \"group5\""},
+			expected:  []string{"profile.name eq \"group1\" or profile.name eq \"group2\"", "profile.name eq \"group3\" or profile.name eq \"group4\"", "profile.name eq \"group5\""},
 		},
 	}
 
