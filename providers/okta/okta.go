@@ -109,11 +109,12 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
 		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
+
 		oktaGroups, resp, err := query.Execute()
 
 		if err != nil {
-			bdy, err := io.ReadAll(resp.Body)
-			if err != nil {
+			bdy, err2 := io.ReadAll(resp.Body)
+			if err2 != nil {
 				return nil, fmt.Errorf("failed to read response body: %s %w", string(bdy), err)
 			}
 
@@ -147,7 +148,7 @@ func toFilterString(groupNames []string) string {
 	if len(groupNames) == 0 {
 		return ""
 	}
-	return url.QueryEscape(fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \"")))
+	return url.QueryEscape(fmt.Sprintf("profile.Name eq \"%s\"", strings.Join(groupNames, "\" or profile.Name eq \"")))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
