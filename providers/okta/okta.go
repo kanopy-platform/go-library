@@ -95,40 +95,37 @@ func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group
 }
 
 func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsize int) ([]*okta.Group, error) {
-
 	groups := []*okta.Group{}
-
-	// groupMap := map[string]bool{}
-	// for _, groupName := range groupNames {
-	// 	groupMap[groupName] = true
-	// }
 
 	batches := buildFilterNameBatches(groupNames, batchsize)
 
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
-		fmt.Println("filter: ", filter, " batchsize: ", batchsize)
 		query := c.GroupAPI.ListGroups(ctx).Search(filter).Expand("stats")
 
 		oktaGroups, resp, err := query.Execute()
 
-		if err != nil {
-			bdy, err2 := io.ReadAll(resp.Body)
-			if err2 != nil {
-				return nil, fmt.Errorf("failed to read response body: %s %w", string(bdy), err)
+		for {
+			if err != nil {
+				bdy, err2 := io.ReadAll(resp.Body)
+				if err2 != nil {
+					return nil, fmt.Errorf("failed to read response body: %s %w", string(bdy), err)
+				}
+
+				return nil, fmt.Errorf("failed to query okta group: %w", err)
 			}
 
-			return nil, fmt.Errorf("failed to query okta group: %w", err)
-		}
+			for _, group := range oktaGroups {
+				groups = append(groups, &group)
+			}
 
-		for _, group := range oktaGroups {
-			//if group.Profile != nil && group.Profile.Name != nil && groupMap[*group.Profile.Name] {
-			groups = append(groups, &group)
-			//	delete(groupMap, *group.Profile.Name)
-			//}
+			if !resp.HasNextPage() {
+				break
+			}
+			oktaGroups = []okta.Group{}
+			resp, err = resp.Next(&oktaGroups)
 		}
 	}
-
 	return groups, nil
 }
 
