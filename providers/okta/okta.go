@@ -108,6 +108,7 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
+		fmt.Println("filter: ", filter, " batchsize: ", batchsize)
 		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
 
 		oktaGroups, resp, err := query.Execute()
