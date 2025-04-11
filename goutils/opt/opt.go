@@ -7,12 +7,12 @@ type Opt[T any] struct {
     value *T
 }
 
-// Some creates an Option with a value.
+// Some creates an Opt with a value.
 func Some[T any](value T) Opt[T] {
     return Opt[T]{&value}
 }
 
-// None creates an empty Option.
+// None creates an empty Opt.
 func None[T any]() Opt[T] {
     return Opt[T]{}
 }
@@ -35,7 +35,7 @@ func (o Opt[T]) Get() (*T, error) {
 	if o.IsSome() {
 		return o.value, nil
 	}
-	return nil, fmt.Errorf("option has no value")
+	return nil, fmt.Errorf("opt has no value")
 }
 
 func (o Opt[T]) Or(other Opt[T]) Opt[T] {
