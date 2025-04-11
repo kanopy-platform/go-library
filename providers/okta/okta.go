@@ -108,7 +108,7 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
 		fmt.Println("filter: ", filter, " batchsize: ", batchsize)
-		query := c.GroupAPI.ListGroups(ctx).Filter(filter).Expand("stats")
+		query := c.GroupAPI.ListGroups(ctx).Search(filter).Expand("stats")
 
 		oktaGroups, resp, err := query.Execute()
 
@@ -148,7 +148,7 @@ func toFilterString(groupNames []string) string {
 	if len(groupNames) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("name eq \"%s\"", strings.Join(groupNames, "\" or name eq \""))
+	return fmt.Sprintf("profile.name eq \"%s\"", strings.Join(groupNames, "\" or profile.name eq \""))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
