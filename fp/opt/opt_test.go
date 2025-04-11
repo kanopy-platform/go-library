@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/kanopy-platform/go-library/goutils/opt"
+	"github.com/kanopy-platform/go-library/fp/opt"
 )
 
 func TestSomeAndNone(t *testing.T) {
