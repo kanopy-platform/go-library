@@ -1,6 +1,7 @@
 package fp_test
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
@@ -188,56 +189,137 @@ func TestEdgeCases(t *testing.T) {
 		t.Errorf("Extracting from nested opt should work, got %v", *value)
 	}
 }
+
+func TestOptJsonMarshaling(t *testing.T) {
+    type WithPointer struct {
+        Value *string `json:"value,omitempty"`
     }
 
-    noneValue := opt.None[int]()
-    result = opt.Map(noneValue, func(v int) string {
-        t.Error("Map should not call function on None")
-        return strconv.Itoa(v)
-    })
-    if result.IsSome() {
-        t.Error("Map on None should return None")
+    type WithOpt struct {
+        Value fp.Opt[string] `json:"value,omitempty,omitzero"`
     }
 
-    type Person struct {
-        Name string
-        Age int
+    testCases := []struct {
+        name     string
+        ptrValue *string
+        optValue fp.Opt[string]
+    }{
+        {
+            name:     "nil value",
+            ptrValue: nil,
+            optValue: fp.None[string](),
+        },
+        {
+            name:     "empty string",
+            ptrValue: func() *string { s := ""; return &s }(),
+            optValue: fp.Some(""),
+        },
+        {
+            name:     "non-empty string",
+            ptrValue: func() *string { s := "hello"; return &s }(),
+            optValue: fp.Some("hello"),
+        },
     }
 
-    somePerson := opt.Some(Person{Name: "Alice", Age: 30})
-    result = opt.Map(somePerson, func(p Person) string {
-        return p.Name
-    })
-    value, _ = result.Get()
-    if *value != "Alice" {
-        t.Errorf("Map should transform struct to string, got %v", *value)
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            withPtr := WithPointer{Value: tc.ptrValue}
+            withOpt := WithOpt{Value: tc.optValue}
+
+            ptrJSON, err := json.Marshal(withPtr)
+            if err != nil {
+                t.Fatalf("Failed to marshal pointer: %v", err)
+            }
+
+            optJSON, err := json.Marshal(withOpt)
+            if err != nil {
+                t.Fatalf("Failed to marshal Opt: %v", err)
+            }
+
+            if string(ptrJSON) != string(optJSON) {
+                t.Errorf("JSON output differs: pointer=%s, opt=%s", ptrJSON, optJSON)
+            }
+
+            var newWithPtr WithPointer
+            var newWithOpt WithOpt
+
+            if err := json.Unmarshal(ptrJSON, &newWithPtr); err != nil {
+                t.Fatalf("Failed to unmarshal to pointer: %v", err)
+            }
+
+            if err := json.Unmarshal(optJSON, &newWithOpt); err != nil {
+                t.Fatalf("Failed to unmarshal to Opt: %v", err)
+            }
+
+            if (newWithPtr.Value == nil) != newWithOpt.Value.IsNone() {
+                t.Errorf("Presence differs after unmarshaling: pointer=%v, opt=%v", 
+                    newWithPtr.Value != nil, newWithOpt.Value.IsSome())
+            }
+
+            if newWithPtr.Value != nil && newWithOpt.Value.IsSome() {
+                ptrVal := *newWithPtr.Value
+                optVal, _ := newWithOpt.Value.Get()
+
+                if ptrVal != *optVal {
+                    t.Errorf("Values differ after unmarshaling: pointer=%v, opt=%v", 
+                        ptrVal, *optVal)
+                }
+            }
+        })
     }
 }
 
-func TestEdgeCases(t *testing.T) {
-    zeroInt := opt.Some(0)
-    if !zeroInt.IsSome() {
-        t.Error("Some(0) should have IsSome() == true")
+func TestOptJsonRoundtrip(t *testing.T) {
+    type ComplexStruct struct {
+        StringValue fp.Opt[string] `json:"string,omitempty"`
+        IntValue    fp.Opt[int]    `json:"int,omitempty"`
+        BoolValue   fp.Opt[bool]   `json:"bool,omitempty"`
     }
 
-    zeroString := opt.Some("")
-    if !zeroString.IsSome() {
-        t.Error("Some(\"\") should have IsSome() == true")
+    original := ComplexStruct{
+        StringValue: fp.Some("test"),
+        IntValue:    fp.Some(42),
+        BoolValue:   fp.None[bool](),
     }
 
-    var nilPtr *string = nil
-    someNil := opt.Some(nilPtr)
-    if !someNil.IsSome() {
-        t.Error("Some(nil) should have IsSome() == true")
+    jsonData, err := json.Marshal(original)
+    if err != nil {
+        t.Fatalf("Failed to marshal: %v", err)
     }
 
-    nestedopt := opt.Some(opt.Some(64))
-    extracted := opt.Map(nestedopt, func(opt opt.Opt[int]) int {
-        value, _ := opt.Get()
-        return *value
-    })
-    value, _ := extracted.Get()
-    if *value != 64 {
-        t.Errorf("Extracting from nested opt should work, got %v", *value)
+    var result ComplexStruct
+    if err := json.Unmarshal(jsonData, &result); err != nil {
+        t.Fatalf("Failed to unmarshal: %v", err)
+    }
+
+    // string
+    if original.StringValue.IsSome() != result.StringValue.IsSome() {
+        t.Errorf("StringValue presence differs after roundtrip")
+    }
+    if original.StringValue.IsSome() {
+        origVal, _ := original.StringValue.Get()
+        resultVal, _ := result.StringValue.Get()
+        if *origVal != *resultVal {
+            t.Errorf("StringValue differs after roundtrip: original=%v, result=%v", 
+                *origVal, *resultVal)
+        }
+    }
+
+    // int
+    if original.IntValue.IsSome() != result.IntValue.IsSome() {
+        t.Errorf("IntValue presence differs after roundtrip")
+    }
+    if original.IntValue.IsSome() {
+        origVal, _ := original.IntValue.Get()
+        resultVal, _ := result.IntValue.Get()
+        if *origVal != *resultVal {
+            t.Errorf("IntValue differs after roundtrip: original=%v, result=%v", 
+                *origVal, *resultVal)
+        }
+    }
+
+	// bool
+    if original.BoolValue.IsSome() != result.BoolValue.IsSome() {
+        t.Errorf("BoolValue presence differs after roundtrip")
     }
 }

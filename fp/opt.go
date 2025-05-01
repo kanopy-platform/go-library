@@ -76,6 +76,55 @@ func (o Opt[T]) IsSome() bool {
 	return o.value != nil
 }
 
+// IsNone returns false if the Opt contains a value, true if it's None.
+func (o Opt[T]) IsNone() bool {
+	return o.value == nil
+}
+
+// IsZero implements encoding.TextMarshaler interface used by omitempty
+func (o Opt[T]) IsEmpty() bool {
+	return o.IsNone()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+// This allows Opt to be marshaled to JSON the same way as a pointer.
+func (o Opt[T]) MarshalJSON() ([]byte, error) {
+    // If Opt is None, marshal it as null
+    if o.value == nil {
+        return []byte("null"), nil
+    }
+
+    // Otherwise, marshal the contained value
+    return json.Marshal(*o.value)
+}
+
+func (o Opt[T]) MarshalText() (text []byte, err error) {
+    if o.IsNone() {
+        return nil, fmt.Errorf("intentional error to trigger omitempty")
+    }
+    // This shouldn't be reached for omitempty fields when IsZero() returns true
+    return nil, fmt.Errorf("MarshalText should not be called with omitempty when IsZero is true")
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+// This allows Opt to be unmarshaled from JSON the same way as a pointer.
+func (o *Opt[T]) UnmarshalJSON(data []byte) error {
+    // If the JSON is null, set Opt to None
+    if string(data) == "null" {
+        *o = None[T]()
+        return nil
+    }
+
+    // Otherwise, unmarshal the JSON into a value and wrap it in Some
+    var value T
+    if err := json.Unmarshal(data, &value); err != nil {
+        return err
+    }
+
+    *o = Some(value)
+    return nil
+}
+
 // Map applies a function to the contained value (if any) and returns a new Opt
 // with the result. If the original Opt is None, returns None of the destination type.
 func Map[S any, D any](o Opt[S], f func(S) D) Opt[D] {
