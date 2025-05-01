@@ -86,22 +86,22 @@ func ExampleMapOpt() {
 }
 
 func ExampleOpt_MarshalJSON() {
-    someString := fp.Some("hello")
-    someInt := fp.Some(42)
-    noneValue := fp.None[string]()
+	someString := fp.Some("hello")
+	someInt := fp.Some(42)
+	noneValue := fp.None[string]()
 
-    stringJSON, _ := json.Marshal(someString)
-    intJSON, _ := json.Marshal(someInt)
-    noneJSON, _ := json.Marshal(noneValue)
+	stringJSON, _ := json.Marshal(someString)
+	intJSON, _ := json.Marshal(someInt)
+	noneJSON, _ := json.Marshal(noneValue)
 
-    fmt.Println(string(stringJSON))
-    fmt.Println(string(intJSON))
-    fmt.Println(string(noneJSON))
+	fmt.Println(string(stringJSON))
+	fmt.Println(string(intJSON))
+	fmt.Println(string(noneJSON))
 
-    // Output:
-    // "hello"
-    // 42
-    // null
+	// Output:
+	// "hello"
+	// 42
+	// null
 }
 
 func ExampleOpt_UnmarshalJSON() {
