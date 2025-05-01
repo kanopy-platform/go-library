@@ -8,7 +8,7 @@ import (
 	"github.com/kanopy-platform/go-library/fp"
 )
 
-func TestSomeAndNone(t *testing.T) {
+func TestOptSomeAndNone(t *testing.T) {
 	someValue := fp.Some(64)
 	if !someValue.IsSome() {
 		t.Error("Expected Some(64) to have IsSome() == true")
@@ -30,7 +30,7 @@ func TestSomeAndNone(t *testing.T) {
 	}
 }
 
-func TestFilter(t *testing.T) {
+func TestOptFilter(t *testing.T) {
 	isEven := func(v int) bool { return v%2 == 0 }
 
 	someEven := fp.Some(64)
@@ -52,7 +52,7 @@ func TestFilter(t *testing.T) {
 	}
 }
 
-func TestInspect(t *testing.T) {
+func TestOptInspect(t *testing.T) {
 	someValue := fp.Some(64)
 	result := someValue.Inspect(func(v int) fp.Opt[int] {
 		return fp.Some(v * 2)
@@ -79,7 +79,7 @@ func TestInspect(t *testing.T) {
 	}
 }
 
-func TestOr(t *testing.T) {
+func TestOptOr(t *testing.T) {
 	someValue := fp.Some(64)
 	result := someValue.Or(fp.Some(128))
 	value, _ := result.Get()
@@ -100,7 +100,7 @@ func TestOr(t *testing.T) {
 	}
 }
 
-func TestOrElse(t *testing.T) {
+func TestOptOrElse(t *testing.T) {
 	someValue := fp.Some(64)
 	result := someValue.OrElse(func() fp.Opt[int] {
 		t.Error("OrElse should not call function on Some")
@@ -128,9 +128,9 @@ func TestOrElse(t *testing.T) {
 	}
 }
 
-func TestMap(t *testing.T) {
+func TestMapOpt(t *testing.T) {
 	someValue := fp.Some(64)
-	result := fp.Map(someValue, func(v int) string {
+	result := fp.MapOpt(someValue, func(v int) string {
 		return strconv.Itoa(v)
 	})
 	value, _ := result.Get()
@@ -139,7 +139,7 @@ func TestMap(t *testing.T) {
 	}
 
 	noneValue := fp.None[int]()
-	result = fp.Map(noneValue, func(v int) string {
+	result = fp.MapOpt(noneValue, func(v int) string {
 		t.Error("Map should not call function on None")
 		return strconv.Itoa(v)
 	})
@@ -153,7 +153,7 @@ func TestMap(t *testing.T) {
 	}
 
 	somePerson := fp.Some(Person{Name: "Alice", Age: 30})
-	result = fp.Map(somePerson, func(p Person) string {
+	result = fp.MapOpt(somePerson, func(p Person) string {
 		return p.Name
 	})
 	value, _ = result.Get()
@@ -162,7 +162,7 @@ func TestMap(t *testing.T) {
 	}
 }
 
-func TestEdgeCases(t *testing.T) {
+func TestOptEdgeCases(t *testing.T) {
 	zeroInt := fp.Some(0)
 	if !zeroInt.IsSome() {
 		t.Error("Some(0) should have IsSome() == true")
@@ -180,7 +180,7 @@ func TestEdgeCases(t *testing.T) {
 	}
 
 	nestedopt := fp.Some(fp.Some(64))
-	extracted := fp.Map(nestedopt, func(opt fp.Opt[int]) int {
+	extracted := fp.MapOpt(nestedopt, func(opt fp.Opt[int]) int {
 		value, _ := opt.Get()
 		return *value
 	})

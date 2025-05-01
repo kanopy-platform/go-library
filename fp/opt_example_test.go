@@ -76,7 +76,7 @@ func ExampleOpt_Filter() {
 
 func ExampleMap() {
 	numberOpt := fp.Some(5)
-	stringOpt := fp.Map(numberOpt, func(x int) string {
+	stringOpt := fp.MapOpt(numberOpt, func(x int) string {
 		return fmt.Sprintf("Number is %d", x)
 	})
 
