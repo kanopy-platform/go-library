@@ -116,6 +116,10 @@ func (o *Opt[T]) UnmarshalJSON(data []byte) error {
     return nil
 }
 
+func (o *Opt[T]) Unwrap() T {
+	return *o.value
+}
+
 // MapOpt applies a function to the contained value (if any) and returns a new Opt
 // with the result. If the original Opt is None, returns None of the destination type.
 func MapOpt[S any, D any](o Opt[S], f func(S) D) Opt[D] {

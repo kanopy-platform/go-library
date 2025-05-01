@@ -169,3 +169,76 @@ func ExampleOpt_json_omit() {
 	// Complete: {"name":"Alice","address":"123 Main St"}
 	// No Address: {"name":"Bob"}
 }
+
+func ExampleOpt_Unwrap() {
+	// Create an Opt with a value
+	opt := fp.Some("hello world")
+
+	// Unwrap directly extracts the value
+	value := opt.Unwrap()
+	fmt.Println(value)
+
+	// Output:
+	// hello world
+}
+
+func ExampleOpt_Unwrap_withCondition() {
+	// A safer pattern is to check IsSome before unwrapping
+	opt := fp.Some(42)
+
+	if opt.IsSome() {
+		value := opt.Unwrap()
+		fmt.Println("The value is:", value)
+	} else {
+		fmt.Println("No value present")
+	}
+
+	// With None, we should not call Unwrap
+	none := fp.None[int]()
+
+	if none.IsSome() {
+		// This line would never execute, avoiding the panic
+		value := none.Unwrap()
+		fmt.Println("The value is:", value)
+	} else {
+		fmt.Println("No value present")
+	}
+
+	// Output:
+	// The value is: 42
+	// No value present
+}
+
+func ExampleOpt_Unwrap_withOr() {
+	// Using Or with Unwrap for default values
+	userInput := fp.None[string]()
+
+	// Provide a default if None
+	opt := userInput.Or(fp.Some("default value"))
+	result := opt.Unwrap()
+	fmt.Println(result)
+
+	// Output:
+	// default value
+}
+
+func ExampleOpt_Unwrap_panic() {
+	// This example demonstrates that unwrapping None will cause a panic
+	// In real code, you should always check IsSome() before calling Unwrap()
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+		}
+	}()
+
+	opt := fp.None[string]()
+
+	// This will panic - don't do this in production code!
+	_ = opt.Unwrap()
+
+	// The code never reaches here
+	fmt.Println("This line won't be printed")
+
+	// Output:
+	// Recovered from panic: runtime error: invalid memory address or nil pointer dereference
+}
