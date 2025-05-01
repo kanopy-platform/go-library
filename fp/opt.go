@@ -1,9 +1,12 @@
 // Package opt implements the Option pattern from functional programming.
 // It provides a type-safe way to represent values that may or may not be present,
 // offering an alternative to nil pointers and helping to avoid nil pointer panics.
-package opt
+package fp
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Opt represents a value that may or may not be present.
 // It serves as a container that explicitly handles the absence of a value.
