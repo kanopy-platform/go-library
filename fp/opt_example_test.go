@@ -8,7 +8,6 @@ import (
 )
 
 func Example() {
-	// Basic package usage
 	someValue := fp.Some(42)
 	noValue := fp.None[int]()
 
@@ -33,14 +32,14 @@ func ExampleNone() {
 }
 
 func ExampleOpt_Get() {
-	// Getting a value that exists
+	// getting a value that exists
 	someValue := fp.Some("hello")
 	value, err := someValue.Get()
 	if err == nil {
 		fmt.Println("Value:", *value)
 	}
 
-	// Getting a value that doesn't exist
+	// getting a value that doesn't exist
 	noValue := fp.None[string]()
 	_, err = noValue.Get()
 	fmt.Println("Error:", err)
