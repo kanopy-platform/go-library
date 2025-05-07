@@ -107,9 +107,7 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 				return nil, fmt.Errorf("failed to query okta group: %w", err)
 			}
 
-			for _, group := range oktaGroups {
-				groups = append(groups, group)
-			}
+			groups = append(groups, oktaGroups...)
 
 			if !resp.HasNextPage() {
 				break
