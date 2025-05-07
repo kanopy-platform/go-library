@@ -76,20 +76,66 @@ func (c *Client) ListGroupUsers(ctx context.Context, groupId string, opts ...Lis
 	return users, nil
 }
 
-func (c *Client) GroupByName(ctx context.Context, groupName string) (*okta.Group, error) {
+func (c *Client) GroupByName(ctx context.Context, groupName string) (okta.Group, error) {
+
 	query := c.GroupAPI.ListGroups(ctx).Q(groupName)
 	oktaGroups, _, err := query.Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed to query okta group: %w", err)
+		return okta.Group{}, fmt.Errorf("failed to query okta group: %w", err)
 	}
 
 	for _, group := range oktaGroups {
 		if group.Profile != nil && group.Profile.Name != nil && *group.Profile.Name == groupName {
-			return &group, nil
+			return group, nil
 		}
 	}
 
-	return nil, fmt.Errorf("unable to find okta group %q", groupName)
+	return okta.Group{}, fmt.Errorf("unable to find okta group %q", groupName)
+}
+
+func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsize int) ([]okta.Group, error) {
+	groups := []okta.Group{}
+
+	batches := buildFilterNameBatches(groupNames, batchsize)
+
+	for _, filter := range batches {
+		// expanding stats to get the number of users in the group
+		query := c.GroupAPI.ListGroups(ctx).Search(filter).Expand("stats")
+		oktaGroups, resp, err := query.Execute()
+		for {
+			if err != nil {
+				return nil, fmt.Errorf("failed to query okta group: %w", err)
+			}
+
+			groups = append(groups, oktaGroups...)
+
+			if !resp.HasNextPage() {
+				break
+			}
+			oktaGroups = []okta.Group{}
+			resp, err = resp.Next(&oktaGroups)
+		}
+	}
+	return groups, nil
+}
+
+func buildFilterNameBatches(groupNames []string, batchsize int) []string {
+	batches := []string{}
+	for i := 0; i < len(groupNames); i += batchsize {
+		end := i + batchsize
+		if end > len(groupNames) {
+			end = len(groupNames)
+		}
+		batches = append(batches, toFilterString(groupNames[i:end]))
+	}
+	return batches
+}
+
+func toFilterString(groupNames []string) string {
+	if len(groupNames) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("profile.name eq \"%s\"", strings.Join(groupNames, "\" or profile.name eq \""))
 }
 
 func jwkFromBytes(bytes []byte) (*jose.JSONWebKey, error) {
