@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"strings"
 
 	jose "github.com/go-jose/go-jose/v4"
@@ -102,16 +101,9 @@ func (c *Client) GroupsByName(ctx context.Context, groupNames []string, batchsiz
 	for _, filter := range batches {
 		// expanding stats to get the number of users in the group
 		query := c.GroupAPI.ListGroups(ctx).Search(filter).Expand("stats")
-
 		oktaGroups, resp, err := query.Execute()
-
 		for {
 			if err != nil {
-				bdy, err2 := io.ReadAll(resp.Body)
-				if err2 != nil {
-					return nil, fmt.Errorf("failed to read response body: %s %w", string(bdy), err)
-				}
-
 				return nil, fmt.Errorf("failed to query okta group: %w", err)
 			}
 
