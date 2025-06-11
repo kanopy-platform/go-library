@@ -7,11 +7,11 @@ import (
 type TimeFlag time.Time
 
 func (t *TimeFlag) String() string {
-	return time.Time(*t).Format(time.RFC3339)
+	return time.Time(*t).Format(time.RFC3339Nano)
 }
 
 func (t *TimeFlag) Set(value string) error {
-	parsedTime, err := time.Parse(time.RFC3339, value)
+	parsedTime, err := time.Parse(time.RFC3339Nano, value)
 	if err != nil {
 		return err
 	}
