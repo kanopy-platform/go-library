@@ -3,7 +3,6 @@ module github.com/kanopy-platform/go-library
 go 1.23.0
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -13,7 +12,6 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
 	github.com/trinodb/trino-go-client v0.326.0
-	go.uber.org/mock v0.5.2
 	k8s.io/apimachinery v0.27.16
 	sigs.k8s.io/yaml v1.3.0
 )
