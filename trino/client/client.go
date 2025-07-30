@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/trinodb/trino-go-client/trino"
@@ -12,7 +13,7 @@ import (
 
 var (
 	boolTrue  bool = true
-	boolFalse bool = false
+	boolFalse bool = false //nolint:unused
 )
 
 // ConnectionConfig constructs a base ServerURI for a Trino connection.
@@ -127,10 +128,16 @@ func (c *ConnectionConfig) Parse() (string, error) {
 	return rawDSN, nil
 }
 
+// Client is a Trino client that provides methods to connect and query a Trino server
+// it also provides exponential backoff retry logic for queries.
 type Client struct {
-	config     trino.Config
-	dsn        string
-	conn       *sql.DB
+	// config is the trino.Config used to generate a DSN for the connection.
+	config trino.Config
+	// dsn is the Data Source Name used to connect to the Trino server.
+	dsn string
+	// conn is the SQL database connection to the Trino server.
+	conn *sql.DB
+	// retryCount is the number of times to retry a query in case of failure, default 5
 	retryCount int
 }
 
@@ -139,6 +146,7 @@ func New(uri string, opts ...option) (*Client, error) {
 		config: trino.Config{
 			ServerURI: uri,
 		},
+		retryCount: 5, // default retry count
 	}
 
 	for _, opt := range opts {
@@ -161,7 +169,7 @@ func (c *Client) Connect() error {
 	db, err := sql.Open("trino", c.dsn)
 	if err != nil {
 		if db != nil {
-			db.Close()
+			db.Close() //nolint:errcheck
 		}
 		// cannot log error directly because DSN contains username and password
 		return fmt.Errorf("malformed server URI, please check your connection string and try again")
@@ -172,8 +180,10 @@ func (c *Client) Connect() error {
 	return nil
 }
 
+// Disconnect closes the connection to the Trino server.
+// it is intended to be used as a defer function so no error is returned.
 func (c *Client) Disconnect() {
-	c.conn.Close()
+	c.conn.Close() //nolint:errcheck
 	log.Info("Connection to Trino closed")
 }
 
@@ -183,13 +193,30 @@ func (c *Client) Query(ctx context.Context, statement string, args ...any) (*sql
 			return nil, e
 		}
 	}
+
+	// Trino conn.PrepareContext doesn't actually connect to the DB it just returns a *Stmt
 	stmt, err := c.conn.PrepareContext(ctx, statement)
 	if err != nil {
+		// this is unreavchable for the trino driver but we handle it to keep the linter happy
 		return nil, fmt.Errorf("prepare Error: %s", err)
 	}
-	defer stmt.Close()
+	// this cannot return an error for trino
+	defer stmt.Close() //nolint:errcheck
 
-	return stmt.QueryContext(ctx, args...)
+	count := 0
+	for {
+		out, err := stmt.QueryContext(ctx, args...)
+		if err == nil {
+			return out, nil
+		}
+
+		count++
+		if count > c.retryCount {
+			return nil, fmt.Errorf("query failed after %d retries: %w", count, err)
+		}
+
+		time.Sleep(time.Second * 2 * time.Duration(count)) // exponential backoff
+	}
 }
 
 type option func(*Client) error
@@ -221,6 +248,13 @@ func WithCustomClient(name string, customClient *http.Client) option {
 		}
 		c.config.CustomClientName = name
 
+		return nil
+	}
+}
+
+func WithRetryCount(retryCount int) option {
+	return func(c *Client) error {
+		c.retryCount = retryCount
 		return nil
 	}
 }

@@ -1,12 +1,16 @@
 package client
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	mocktrino "github.com/kanopy-platform/go-library/trino/testing"
 )
 
 func testURI(username, password, server string) string {
@@ -103,5 +107,93 @@ func TestConnectionConfig(t *testing.T) {
 		}
 		require.NoError(t, err, name)
 		assert.Equal(t, tc.expected, serverURI, name)
+	}
+}
+
+// mockRetryDB creates a mock sql.DB with sqlmock for testing retry logic
+// the DB will expect 3 retries and return errors for the first two queries
+//func mockRetryDB(ctx context.Context, t *testing.T) (*sql.DB, error) {
+//	ctrl := gomock.NewController(t)
+//
+//	mockStmt := mocktrino.NewMockStmtQueryContext(ctrl)
+//	mockStmt.EXPECT().QueryContext(ctx, "SELECT 1").Return(nil, fmt.Errorf("mock error")).Times(2)
+//	mockStmt.EXPECT().QueryContext(gomock.Any(), gomock.Any()).Return(&mocktrino.StubRows{}, nil).Times(1)
+//
+//	mockPrepare := mocktrino.NewMockConnPrepareContext(ctrl)
+//	mockPrepare.EXPECT().PrepareContext(gomock.Any(), gomock.Any()).Return(mockStmt, nil).AnyTimes()
+//
+//	//	mockConn := mocktrino.NewMockConn(ctrl)
+//	//	mockConn.EXPECT().PrepareConext(gomock.Any(), gomock.Any()).Return(mockStmt, nil).AnyTimes()
+//	mockDriver := mocktrino.NewMockDriver(ctrl)
+//	mockDriver.EXPECT().Open("mock://").Return(mockPrepare, nil).AnyTimes()
+//
+//	db, err := sql.Open("mock_trino", "mock://")
+//
+//	return db, err
+//}
+
+func TestClientRetry(t *testing.T) {
+	t.Parallel()
+
+	testcases := map[string]struct {
+		retryCount int
+		err        bool
+	}{
+		//		"retry 0 times": {
+		//			retryCount: 0,
+		//			err:        true,
+		//		},
+		//		"retry 1 time": {
+		//			retryCount: 1,
+		//			err:        true,
+		//		},
+		"retry 2 times": {
+			retryCount: 2,
+			err:        false,
+		},
+	}
+
+	for name, tc := range testcases {
+		//		ctx := context.TODO()
+		//		db, err := mockRetryDB(ctx, t)
+
+		ctx := context.Background()
+		stmt := mocktrino.MockStmt{
+			Rows: []*mocktrino.StubRows{
+				nil,
+				nil,
+				{},
+			},
+			Err: []error{
+				fmt.Errorf("mock error"),
+				fmt.Errorf("mock error"),
+				nil,
+			},
+		}
+		conn := mocktrino.MockConn{
+			Stmt: &stmt,
+		}
+		driver := mocktrino.MockDriver{
+			Conn: &conn,
+		}
+
+		sql.Register("mock_trino", &driver)
+
+		db, err := sql.Open("mock_trino", "mock://")
+		require.NoError(t, err, name)
+
+		client := &Client{
+			conn:       db,
+			retryCount: tc.retryCount,
+		}
+
+		rows, err := client.Query(ctx, "SELECT 1")
+		if tc.err {
+			assert.Error(t, err, name)
+			assert.Nil(t, rows, name)
+			continue
+		}
+		require.NoError(t, err, name)
+		assert.NotNil(t, rows, name)
 	}
 }
