@@ -212,7 +212,7 @@ func (c *Client) Query(ctx context.Context, statement string, args ...any) (*sql
 
 		count++
 		if count > c.retryCount {
-			return nil, fmt.Errorf("query failed after %d retries: %w", count, err)
+			return nil, fmt.Errorf("query failed after %d retries: %w", retryCount, err)
 		}
 
 		time.Sleep(time.Second * 2 * time.Duration(count)) // exponential backoff
