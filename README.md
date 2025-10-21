@@ -2,6 +2,15 @@
 
 The go-library is a monorepo of golang packages designed for reusability within CLI and daemon applications.
 
+## Adding to go-library
+
+Packages added to go-library should follow these guidelines:
+
+1. The package API is fairly stable.
+1. It is already demonstrating reusability within other repositories.
+  a. There is an benefit to the SDLC of both the package and its current location by adding it to `go-library`
+1. The package can be open sourced and meet the LICENSE. 
+
 ## Conventions
 
 A package should be self contained within its own folder off the root of the repository.
