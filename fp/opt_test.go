@@ -53,26 +53,24 @@ func TestOptFilter(t *testing.T) {
 }
 
 func TestOptInspect(t *testing.T) {
+	var inspected int
+
 	someValue := fp.Some(64)
-	result := someValue.Inspect(func(v int) fp.Opt[int] {
-		return fp.Some(v * 2)
+	result := someValue.Inspect(func(v int) {
+		inspected = v
 	})
+	if inspected != 64 {
+		t.Errorf("Inspect should call function with contained value, got %d", inspected)
+	}
 	value, _ := result.Get()
 	if value == nil || *value != 64 {
-		t.Error("Inspect should return the result of applying the function")
+		t.Error("Inspect should return the original Opt unchanged")
 	}
 
-	result = someValue.Inspect(func(v int) fp.Opt[int] {
-		return fp.None[int]()
-	})
-	if !result.IsSome() {
-		t.Error("Inspect to None should return None")
-	}
-
+	inspected = 0
 	noneValue := fp.None[int]()
-	result = noneValue.Inspect(func(v int) fp.Opt[int] {
+	result = noneValue.Inspect(func(v int) {
 		t.Error("Inspect should not call function on None")
-		return fp.Some(v)
 	})
 	if result.IsSome() {
 		t.Error("Inspect on None should return None")

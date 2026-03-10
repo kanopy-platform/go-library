@@ -35,9 +35,9 @@ func (o Opt[T]) Filter(predicate func(val T) bool) Opt[T] {
 	return None[T]()
 }
 
-// Inspect executes the provided function on the value if it exists and returns the original Opt.
-// This is useful for side effects like logging without affecting the Opt chain.
-func (o Opt[T]) Inspect(f func(T) Opt[T]) Opt[T] {
+// Inspect calls f with the contained value if present and returns the original Opt unchanged.
+// Useful for side effects (e.g. logging) in an Opt chain without altering the value.
+func (o Opt[T]) Inspect(f func(T)) Opt[T] {
 	if o.value != nil {
 		f(*o.value)
 	}

@@ -73,6 +73,25 @@ func ExampleOpt_Filter() {
 	// false
 }
 
+func ExampleOpt_Inspect() {
+	name := fp.Some("Alice")
+
+	result := name.Inspect(func(v string) {
+		fmt.Println("debug: processing name:", v)
+	})
+
+	fmt.Println("result:", result.Unwrap())
+
+	// None skips the function entirely
+	fp.None[string]().Inspect(func(v string) {
+		fmt.Println("this never prints")
+	})
+
+	// Output:
+	// debug: processing name: Alice
+	// result: Alice
+}
+
 func ExampleMapOpt() {
 	numberOpt := fp.Some(5)
 	stringOpt := fp.MapOpt(numberOpt, func(x int) string {
