@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/kanopy-platform/context-provider/internal/fp"
+	"github.com/kanopy-platform/go-library/fp"
 )
 
 type PointerStruct struct {
