@@ -98,8 +98,8 @@ func ExampleMapOpt() {
 		return fmt.Sprintf("Number is %d", x)
 	})
 
-	str, _ := stringOpt.Get()
-	fmt.Println(*str)
+	str := stringOpt.Unwrap()
+	fmt.Println(str)
 
 	// Output: Number is 5
 }
