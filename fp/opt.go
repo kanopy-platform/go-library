@@ -6,6 +6,7 @@ package fp
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 // Opt represents a value that may or may not be present.
@@ -81,39 +82,80 @@ func (o Opt[T]) IsNone() bool {
 	return o.value == nil
 }
 
-// IsZero implements encoding.TextMarshaler interface used by omitempty
-func (o Opt[T]) IsEmpty() bool {
+// IsZero reports whether the Opt is None. Used by encoding/json's "omitzero"
+// struct tag to omit the field when the value is absent.
+func (o Opt[T]) IsZero() bool {
 	return o.IsNone()
 }
 
-// MarshalJSON implements the json.Marshaler interface.
-// This allows Opt to be marshaled to JSON the same way as a pointer.
-func (o Opt[T]) MarshalJSON() ([]byte, error) {
-    // if Opt is None, marshal it as null
-    if o.value == nil {
-        return []byte("null"), nil
-    }
+var jsonNull = []byte("null")
 
-    return json.Marshal(*o.value)
+// MarshalJSON implements the json.Marshaler interface.
+// Opt marshals identically to a pointer: None produces null, Some produces the inner value.
+//
+// Common primitive types (string, int, bool, float) are encoded directly to
+// avoid the overhead of re-entering encoding/json's reflection-based pipeline
+// via json.Marshal. All other types fall back to json.Marshal.
+func (o Opt[T]) MarshalJSON() ([]byte, error) {
+	if o.value == nil {
+		return jsonNull, nil
+	}
+
+	switch v := any(*o.value).(type) {
+	case string:
+		return appendJSONString(make([]byte, 0, len(v)+2), v), nil
+	case int:
+		return strconv.AppendInt(nil, int64(v), 10), nil
+	case int64:
+		return strconv.AppendInt(nil, v, 10), nil
+	case int32:
+		return strconv.AppendInt(nil, int64(v), 10), nil
+	case float64:
+		return strconv.AppendFloat(nil, v, 'f', -1, 64), nil
+	case float32:
+		return strconv.AppendFloat(nil, float64(v), 'f', -1, 32), nil
+	case bool:
+		return strconv.AppendBool(nil, v), nil
+	case json.Marshaler:
+		return v.MarshalJSON()
+	default:
+		return json.Marshal(v)
+	}
+}
+
+// appendJSONString appends a JSON-encoded (quoted + escaped) string to dst.
+func appendJSONString(dst []byte, s string) []byte {
+	dst = append(dst, '"')
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c == '"' || c == '\\':
+			dst = append(dst, '\\', c)
+		case c < 0x20:
+			dst = append(dst, '\\', 'u', '0', '0', "0123456789abcdef"[c>>4], "0123456789abcdef"[c&0xf])
+		default:
+			dst = append(dst, c)
+		}
+	}
+	dst = append(dst, '"')
+	return dst
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-// This allows Opt to be unmarshaled from JSON the same way as a pointer.
+// Opt unmarshals identically to a pointer: null produces None, any value produces Some.
 func (o *Opt[T]) UnmarshalJSON(data []byte) error {
-    // if the JSON is null, set Opt to None
-    if string(data) == "null" {
-        *o = None[T]()
-        return nil
-    }
+	if len(data) == 4 && data[0] == 'n' && data[1] == 'u' && data[2] == 'l' && data[3] == 'l' {
+		*o = None[T]()
+		return nil
+	}
 
-    // otherwise, unmarshal the JSON into a value and wrap it in Some
-    var value T
-    if err := json.Unmarshal(data, &value); err != nil {
-        return err
-    }
+	var value T
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
 
-    *o = Some(value)
-    return nil
+	*o = Some(value)
+	return nil
 }
 
 func (o *Opt[T]) Unwrap() T {
